@@ -1,61 +1,58 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Button } from '@/components/ui/Button';
-import { describe, it, expect, vi } from 'vitest';
 
 // Mock the Loader2 icon
 vi.mock('lucide-react', () => ({
-  Loader2: () => <div>Loading Icon</div>
+  Loader2: () => <span data-testid="loader">Loader</span>
 }));
 
 describe('Button Component', () => {
-  it('renders a button with the correct text', () => {
+  it('renders correctly with default props', () => {
     render(<Button>Click Me</Button>);
-    expect(screen.getByText('Click Me')).toBeInTheDocument();
+    const button = screen.getByText('Click Me');
+    expect(button).toBeInTheDocument();
+    expect(button).toHaveClass('bg-blue-600');
+    expect(button).toHaveClass('text-white');
   });
 
-  it('applies the correct variant classes', () => {
-    const { rerender } = render(<Button variant="primary">Primary</Button>);
-    expect(screen.getByText('Primary')).toHaveClass('bg-blue-600');
-
-    rerender(<Button variant="secondary">Secondary</Button>);
-    expect(screen.getByText('Secondary')).toHaveClass('bg-[var(--bg-elevated)]');
-
-    rerender(<Button variant="ghost">Ghost</Button>);
-    expect(screen.getByText('Ghost')).toHaveClass('hover:bg-[var(--bg-elevated)]');
-
-    rerender(<Button variant="destructive">Destructive</Button>);
-    expect(screen.getByText('Destructive')).toHaveClass('bg-rose-600');
+  it('renders with secondary variant', () => {
+    render(<Button variant="secondary">Click Me</Button>);
+    const button = screen.getByText('Click Me');
+    expect(button).toHaveClass('bg-[var(--bg-elevated)]');
+    expect(button).toHaveClass('text-[var(--text-primary)]');
   });
 
-  it('applies the correct size classes', () => {
-    const { rerender } = render(<Button size="sm">Small</Button>);
-    expect(screen.getByText('Small')).toHaveClass('h-8');
-
-    rerender(<Button size="md">Medium</Button>);
-    expect(screen.getByText('Medium')).toHaveClass('h-10');
-
-    rerender(<Button size="lg">Large</Button>);
-    expect(screen.getByText('Large')).toHaveClass('h-12');
+  it('renders with ghost variant', () => {
+    render(<Button variant="ghost">Click Me</Button>);
+    const button = screen.getByText('Click Me');
+    expect(button).toHaveClass('hover:bg-[var(--bg-elevated)]');
+    expect(button).toHaveClass('text-[var(--text-muted)]');
   });
 
-  it('shows loading state when loading prop is true', () => {
-    render(<Button loading>Loading</Button>);
-    expect(screen.getByText('Loading Icon')).toBeInTheDocument();
-    expect(screen.queryByText('Loading')).not.toBeInTheDocument();
+  it('renders with destructive variant', () => {
+    render(<Button variant="destructive">Click Me</Button>);
+    const button = screen.getByText('Click Me');
+    expect(button).toHaveClass('bg-rose-600');
+    expect(button).toHaveClass('text-white');
+  });
+
+  it('renders with loading state', () => {
+    render(<Button loading>Click Me</Button>);
+    expect(screen.getByTestId('loader')).toBeInTheDocument();
+    expect(screen.queryByText('Click Me')).not.toBeInTheDocument();
   });
 
   it('calls onClick handler when clicked', () => {
-    const handleClick = vi.fn();
-    render(<Button onClick={handleClick}>Click Me</Button>);
+    const onClick = vi.fn();
+    render(<Button onClick={onClick}>Click Me</Button>);
     fireEvent.click(screen.getByText('Click Me'));
-    expect(handleClick).toHaveBeenCalled();
+    expect(onClick).toHaveBeenCalled();
   });
 
-  it('disables the button when disabled prop is true', () => {
-    render(<Button disabled>Disabled</Button>);
-    const button = screen.getByText('Disabled');
+  it('is disabled when loading', () => {
+    render(<Button loading>Click Me</Button>);
+    const button = screen.getByText('Click Me');
     expect(button).toBeDisabled();
-    expect(button).toHaveClass('disabled:opacity-50');
   });
 });

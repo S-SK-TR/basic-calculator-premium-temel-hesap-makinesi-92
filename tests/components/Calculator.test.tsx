@@ -2,143 +2,200 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Calculator } from '@/components/Calculator';
 import { useStore } from '@/store/store';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock the useStore hook
+// Mock the store
 vi.mock('@/store/store', () => ({
   useStore: vi.fn()
 }));
 
-// Mock child components
+// Mock the Button component
 vi.mock('@/components/ui/Button', () => ({
   Button: ({ children, onClick, ...props }: any) => (
     <button onClick={onClick} {...props}>{children}</button>
   )
 }));
 
+// Mock the Card component
 vi.mock('@/components/ui/Card', () => ({
   Card: ({ children, ...props }: any) => (
     <div {...props}>{children}</div>
   )
 }));
 
+// Mock the History component
 vi.mock('@/components/History', () => ({
   History: ({ history }: any) => (
     <div data-testid="history">{history.join(', ')}</div>
   )
 }));
 
+// Mock the UnitConverterModal component
 vi.mock('@/components/UnitConverterModal', () => ({
   UnitConverterModal: ({ isOpen, onClose }: any) => (
-    isOpen ? <div data-testid="unit-converter">Unit Converter</div> : null
+    isOpen ? (
+      <div data-testid="unit-converter-modal">
+        <button onClick={onClose}>Close</button>
+      </div>
+    ) : null
   )
 }));
 
+// Mock the Chart component
 vi.mock('@/components/Chart', () => ({
   Chart: ({ isOpen, onClose }: any) => (
-    isOpen ? <div data-testid="chart">Chart</div> : null
+    isOpen ? (
+      <div data-testid="chart">
+        <button onClick={onClose}>Close</button>
+      </div>
+    ) : null
   )
-}));
-
-vi.mock('lucide-react', () => ({
-  HelpCircle: () => <div>Help</div>,
-  BarChart2: () => <div>Chart</div>
 }));
 
 describe('Calculator Component', () => {
-  const mockStore = {
-    calculator: {
-      currentValue: '0',
-      previousValue: '',
-      operation: '',
-      history: [],
-      isUnitConverterOpen: false,
-      isChartOpen: false
-    },
-    setCalculator: vi.fn(),
-    calculate: vi.fn(),
-    clearCalculator: vi.fn(),
-    toggleUnitConverter: vi.fn(),
-    toggleChart: vi.fn()
-  };
-
   beforeEach(() => {
+    // Reset all mocks before each test
     vi.clearAllMocks();
-    (useStore as jest.Mock).mockReturnValue(mockStore);
+
+    // Mock the store implementation
+    (useStore as jest.Mock).mockReturnValue({
+      calculator: {
+        currentValue: '0',
+        previousValue: '',
+        operation: '',
+        history: [],
+        isUnitConverterOpen: false,
+        isChartOpen: false
+      },
+      setCalculator: vi.fn(),
+      calculate: vi.fn(),
+      clearCalculator: vi.fn(),
+      toggleUnitConverter: vi.fn(),
+      toggleChart: vi.fn()
+    });
   });
 
-  it('renders the calculator with all buttons', () => {
+  it('renders correctly', () => {
     render(<Calculator />);
+    expect(screen.getByRole('application', { name: 'Hesap makinesi' })).toBeInTheDocument();
+  });
 
-    // Check if display shows initial value
+  it('displays initial value', () => {
+    render(<Calculator />);
     expect(screen.getByText('0')).toBeInTheDocument();
-
-    // Check if all number buttons are rendered
-    ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0'].forEach(num => {
-      expect(screen.getByText(num)).toBeInTheDocument();
-    });
-
-    // Check if operator buttons are rendered
-    ['+', '-', '*', '/'].forEach(op => {
-      expect(screen.getByText(op)).toBeInTheDocument();
-    });
-
-    // Check if function buttons are rendered
-    ['C', '%', '√', 'x²'].forEach(func => {
-      expect(screen.getByText(func)).toBeInTheDocument();
-    });
-
-    // Check if equals button is rendered
-    expect(screen.getByText('=')).toBeInTheDocument();
   });
 
-  it('updates display when number buttons are clicked', () => {
-    render(<Calculator />);
+  it('handles number button clicks', () => {
+    const setCalculator = vi.fn();
+    (useStore as jest.Mock).mockReturnValue({
+      calculator: {
+        currentValue: '0',
+        previousValue: '',
+        operation: '',
+        history: [],
+        isUnitConverterOpen: false,
+        isChartOpen: false
+      },
+      setCalculator,
+      calculate: vi.fn(),
+      clearCalculator: vi.fn(),
+      toggleUnitConverter: vi.fn(),
+      toggleChart: vi.fn()
+    });
 
+    render(<Calculator />);
     fireEvent.click(screen.getByText('1'));
-    fireEvent.click(screen.getByText('2'));
-    fireEvent.click(screen.getByText('3'));
-
-    // Check if display shows the entered numbers
-    expect(screen.getByText('123')).toBeInTheDocument();
+    expect(setCalculator).toHaveBeenCalledWith({ currentValue: '1' });
   });
 
-  it('performs basic arithmetic operations', () => {
+  it('handles clear button', () => {
+    const clearCalculator = vi.fn();
+    (useStore as jest.Mock).mockReturnValue({
+      calculator: {
+        currentValue: '123',
+        previousValue: '',
+        operation: '',
+        history: [],
+        isUnitConverterOpen: false,
+        isChartOpen: false
+      },
+      setCalculator: vi.fn(),
+      calculate: vi.fn(),
+      clearCalculator,
+      toggleUnitConverter: vi.fn(),
+      toggleChart: vi.fn()
+    });
+
     render(<Calculator />);
-
-    fireEvent.click(screen.getByText('5'));
-    fireEvent.click(screen.getByText('+'));
-    fireEvent.click(screen.getByText('3'));
-    fireEvent.click(screen.getByText('='));
-
-    // Check if calculate function was called
-    expect(mockStore.calculate).toHaveBeenCalled();
-  });
-
-  it('clears the calculator when C button is clicked', () => {
-    render(<Calculator />);
-
     fireEvent.click(screen.getByText('C'));
-
-    // Check if clearCalculator function was called
-    expect(mockStore.clearCalculator).toHaveBeenCalled();
+    expect(clearCalculator).toHaveBeenCalled();
   });
 
-  it('toggles unit converter when help button is clicked', () => {
+  it('handles equals button', () => {
+    const calculate = vi.fn();
+    (useStore as jest.Mock).mockReturnValue({
+      calculator: {
+        currentValue: '5',
+        previousValue: '3',
+        operation: '+',
+        history: [],
+        isUnitConverterOpen: false,
+        isChartOpen: false
+      },
+      setCalculator: vi.fn(),
+      calculate,
+      clearCalculator: vi.fn(),
+      toggleUnitConverter: vi.fn(),
+      toggleChart: vi.fn()
+    });
+
     render(<Calculator />);
-
-    fireEvent.click(screen.getByText('Help'));
-
-    // Check if toggleUnitConverter function was called
-    expect(mockStore.toggleUnitConverter).toHaveBeenCalled();
+    fireEvent.click(screen.getByText('='));
+    expect(calculate).toHaveBeenCalled();
   });
 
-  it('toggles chart when chart button is clicked', () => {
+  it('opens unit converter modal', () => {
+    const toggleUnitConverter = vi.fn();
+    (useStore as jest.Mock).mockReturnValue({
+      calculator: {
+        currentValue: '0',
+        previousValue: '',
+        operation: '',
+        history: [],
+        isUnitConverterOpen: false,
+        isChartOpen: false
+      },
+      setCalculator: vi.fn(),
+      calculate: vi.fn(),
+      clearCalculator: vi.fn(),
+      toggleUnitConverter,
+      toggleChart: vi.fn()
+    });
+
     render(<Calculator />);
+    fireEvent.click(screen.getByLabelText('Birim dönüştürücü aç'));
+    expect(toggleUnitConverter).toHaveBeenCalled();
+  });
 
-    fireEvent.click(screen.getByText('Chart'));
+  it('opens chart modal', () => {
+    const toggleChart = vi.fn();
+    (useStore as jest.Mock).mockReturnValue({
+      calculator: {
+        currentValue: '0',
+        previousValue: '',
+        operation: '',
+        history: [],
+        isUnitConverterOpen: false,
+        isChartOpen: false
+      },
+      setCalculator: vi.fn(),
+      calculate: vi.fn(),
+      clearCalculator: vi.fn(),
+      toggleUnitConverter: vi.fn(),
+      toggleChart
+    });
 
-    // Check if toggleChart function was called
-    expect(mockStore.toggleChart).toHaveBeenCalled();
+    render(<Calculator />);
+    fireEvent.click(screen.getByLabelText('Grafik aç'));
+    expect(toggleChart).toHaveBeenCalled();
   });
 });

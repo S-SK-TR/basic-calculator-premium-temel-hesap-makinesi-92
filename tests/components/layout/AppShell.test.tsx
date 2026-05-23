@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { AppShell } from '@/components/layout/AppShell';
-import { describe, it, expect, vi } from 'vitest';
 
 // Mock the NavLink component
 vi.mock('react-router-dom', () => ({
@@ -10,41 +9,45 @@ vi.mock('react-router-dom', () => ({
   )
 }));
 
-// Mock the icons
-vi.mock('lucide-react', () => ({
-  LayoutDashboard: () => <div>Dashboard Icon</div>,
-  BarChart2: () => <div>Analytics Icon</div>,
-  Settings: () => <div>Settings Icon</div>,
-  Bell: () => <div>Bell Icon</div>
-}));
+// Mock the children component
+const MockChild = () => <div data-testid="child">Child Component</div>;
 
 describe('AppShell Component', () => {
-  it('renders the app shell with navigation items', () => {
+  it('renders correctly', () => {
     render(
       <AppShell>
-        <div>Test Content</div>
+        <MockChild />
       </AppShell>
     );
 
-    // Check if navigation items are rendered
+    // Check if the app shell elements are rendered
+    expect(screen.getByText('AppName')).toBeInTheDocument();
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.getByText('Analytics')).toBeInTheDocument();
     expect(screen.getByText('Settings')).toBeInTheDocument();
-
-    // Check if child content is rendered
-    expect(screen.getByText('Test Content')).toBeInTheDocument();
+    expect(screen.getByTestId('child')).toBeInTheDocument();
   });
 
-  it('renders mobile bottom navigation', () => {
+  it('shows active navigation item', () => {
+    // Mock the useLocation hook to return a specific path
+    vi.mock('react-router-dom', async (importOriginal) => {
+      const original = await importOriginal();
+      return {
+        ...original,
+        useLocation: () => ({ pathname: '/analytics' }),
+        NavLink: ({ children, to, ...props }: any) => (
+          <a href={to} {...props} className={to === '/analytics' ? 'active' : ''}>{children}</a>
+        )
+      };
+    });
+
     render(
       <AppShell>
-        <div>Test Content</div>
+        <MockChild />
       </AppShell>
     );
 
-    // Check if mobile navigation items are rendered
-    expect(screen.getByText('Dashboard Icon')).toBeInTheDocument();
-    expect(screen.getByText('Analytics Icon')).toBeInTheDocument();
-    expect(screen.getByText('Settings Icon')).toBeInTheDocument();
+    // Check if the Analytics link has the active class
+    expect(screen.getByText('Analytics')).toHaveClass('active');
   });
 });

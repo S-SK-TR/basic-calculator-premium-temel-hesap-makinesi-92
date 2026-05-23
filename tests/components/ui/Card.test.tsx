@@ -1,29 +1,34 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { Card } from '@/components/ui/Card';
-import { describe, it, expect } from 'vitest';
+
+// Mock the children component
+const MockChild = () => <div data-testid="child">Child Component</div>;
 
 describe('Card Component', () => {
-  it('renders children inside a card', () => {
+  it('renders correctly with default props', () => {
     render(
       <Card>
-        <div data-testid="child">Test Child</div>
+        <MockChild />
       </Card>
     );
 
-    // Check if child is rendered inside the card
-    expect(screen.getByTestId('child')).toBeInTheDocument();
+    const card = screen.getByTestId('child').parentElement;
+    expect(card).toBeInTheDocument();
+    expect(card).toHaveClass('bg-[var(--bg-surface)]');
+    expect(card).toHaveClass('border');
+    expect(card).toHaveClass('border-[var(--border)]');
+    expect(card).toHaveClass('rounded-2xl');
   });
 
-  it('applies additional className to the card', () => {
+  it('applies additional className', () => {
     render(
       <Card className="custom-class">
-        <div>Test Child</div>
+        <MockChild />
       </Card>
     );
 
-    // Check if custom class is applied to the card
-    const card = screen.getByText('Test Child').parentElement;
+    const card = screen.getByTestId('child').parentElement;
     expect(card).toHaveClass('custom-class');
   });
 });

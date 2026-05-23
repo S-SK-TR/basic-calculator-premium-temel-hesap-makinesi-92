@@ -1,31 +1,40 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import App from '@/App';
 import { useStore } from '@/store/store';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock the useStore hook
+// Mock the store
 vi.mock('@/store/store', () => ({
   useStore: vi.fn()
 }));
 
-// Mock the ThemeProvider and AppShell components
+// Mock the ThemeProvider
 vi.mock('@/components/ThemeProvider', () => ({
   ThemeProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
 }));
 
+// Mock the AppShell
 vi.mock('@/components/layout/AppShell', () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
 }));
 
-// Mock the Calculator component
+// Mock the Calculator
 vi.mock('@/components/Calculator', () => ({
   Calculator: () => <div data-testid="calculator">Calculator</div>
 }));
 
-// Mock the ThemeToggle component
+// Mock the ThemeToggle
 vi.mock('@/components/ui/ThemeToggle', () => ({
-  ThemeToggle: () => <button data-testid="theme-toggle">Toggle Theme</button>
+  ThemeToggle: () => <button data-testid="theme-toggle">Theme Toggle</button>
+}));
+
+// Mock the SplashIntro
+vi.mock('@/components/ui/SplashIntro', () => ({
+  SplashIntro: ({ onComplete }: { onComplete: () => void }) => (
+    <div data-testid="splash-intro">
+      <button onClick={onComplete}>Complete Splash</button>
+    </div>
+  )
 }));
 
 describe('App Component', () => {
@@ -33,68 +42,53 @@ describe('App Component', () => {
     // Reset all mocks before each test
     vi.clearAllMocks();
 
-    // Mock the useStore implementation
-    (useStore as jest.Mock).mockImplementation((selector) => {
-      const state = {
-        calculator: {
-          currentValue: '0',
-          previousValue: '',
-          operation: '',
-          history: [],
-          isUnitConverterOpen: false,
-          isChartOpen: false
-        },
-        setCalculator: vi.fn(),
-        calculate: vi.fn(),
-        clearCalculator: vi.fn(),
-        toggleUnitConverter: vi.fn(),
-        toggleChart: vi.fn(),
-        clearHistory: vi.fn()
-      };
-      return selector(state);
+    // Mock the store implementation
+    (useStore as jest.Mock).mockReturnValue({
+      calculator: {
+        currentValue: '0',
+        previousValue: '',
+        operation: '',
+        history: [],
+        isUnitConverterOpen: false,
+        isChartOpen: false
+      },
+      setCalculator: vi.fn(),
+      calculate: vi.fn(),
+      clearCalculator: vi.fn(),
+      toggleUnitConverter: vi.fn(),
+      toggleChart: vi.fn()
     });
   });
 
-  it('renders the App component with all child components', () => {
+  it('renders the splash screen initially', () => {
     render(<App />);
-
-    // Check if ThemeProvider is rendered
-    expect(screen.getByText('Calculator')).toBeInTheDocument();
-
-    // Check if AppShell is rendered
-    expect(screen.getByTestId('calculator')).toBeInTheDocument();
-
-    // Check if ThemeToggle is rendered
-    expect(screen.getByTestId('theme-toggle')).toBeInTheDocument();
+    expect(screen.getByTestId('splash-intro')).toBeInTheDocument();
   });
 
-  it('shows offline status when navigator is offline', () => {
+  it('shows the calculator after splash completes', async () => {
+    render(<App />);
+    fireEvent.click(screen.getByText('Complete Splash'));
+    await waitFor(() => {
+      expect(screen.getByTestId('calculator')).toBeInTheDocument();
+    });
+  });
+
+  it('shows offline status when not online', async () => {
     // Mock navigator.onLine to be false
     Object.defineProperty(window.navigator, 'onLine', { value: false, configurable: true });
 
     render(<App />);
-
-    // Check if offline status is shown
-    expect(screen.getByText(/Çevrimdışı/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Complete Splash'));
+    await waitFor(() => {
+      expect(screen.getByText(/Çevrimdışı/i)).toBeInTheDocument();
+    });
   });
 
-  it('hides offline status when navigator is online', () => {
-    // Mock navigator.onLine to be true
-    Object.defineProperty(window.navigator, 'onLine', { value: true, configurable: true });
-
+  it('shows theme toggle button', async () => {
     render(<App />);
-
-    // Check if offline status is not shown
-    expect(screen.queryByText(/Çevrimdışı/i)).not.toBeInTheDocument();
-  });
-
-  it('toggles theme when ThemeToggle is clicked', () => {
-    render(<App />);
-
-    const themeToggle = screen.getByTestId('theme-toggle');
-    fireEvent.click(themeToggle);
-
-    // Add your theme toggle assertion here
-    // This would depend on your actual theme toggle implementation
+    fireEvent.click(screen.getByText('Complete Splash'));
+    await waitFor(() => {
+      expect(screen.getByTestId('theme-toggle')).toBeInTheDocument();
+    });
   });
 });

@@ -1,66 +1,53 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { useTheme } from '@/hooks/useTheme';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock the useTheme hook
 vi.mock('@/hooks/useTheme', () => ({
-  useTheme: vi.fn()
+  useTheme: vi.fn(() => ({
+    theme: 'light',
+    toggleTheme: vi.fn()
+  }))
 }));
 
 // Mock the icons
 vi.mock('lucide-react', () => ({
-  Sun: () => <div>Sun Icon</div>,
-  Moon: () => <div>Moon Icon</div>
+  Sun: () => <span data-testid="sun-icon">Sun</span>,
+  Moon: () => <span data-testid="moon-icon">Moon</span>
 }));
 
 describe('ThemeToggle Component', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    (useTheme as jest.Mock).mockReturnValue({
-      theme: 'light',
-      toggleTheme: vi.fn()
-    });
-  });
-
-  it('renders the theme toggle button', () => {
+  it('renders correctly with light theme', () => {
     render(<ThemeToggle />);
-
-    // Check if button is rendered
-    expect(screen.getByRole('button')).toBeInTheDocument();
+    expect(screen.getByTestId('sun-icon')).toBeInTheDocument();
+    expect(screen.queryByTestId('moon-icon')).not.toBeInTheDocument();
   });
 
-  it('shows sun icon when theme is light', () => {
-    render(<ThemeToggle />);
-
-    // Check if sun icon is rendered
-    expect(screen.getByText('Sun Icon')).toBeInTheDocument();
-  });
-
-  it('shows moon icon when theme is dark', () => {
-    (useTheme as jest.Mock).mockReturnValue({
-      theme: 'dark',
-      toggleTheme: vi.fn()
-    });
+  it('renders correctly with dark theme', () => {
+    // Mock the useTheme hook to return dark theme
+    vi.mock('@/hooks/useTheme', () => ({
+      useTheme: vi.fn(() => ({
+        theme: 'dark',
+        toggleTheme: vi.fn()
+      }))
+    }));
 
     render(<ThemeToggle />);
-
-    // Check if moon icon is rendered
-    expect(screen.getByText('Moon Icon')).toBeInTheDocument();
+    expect(screen.getByTestId('moon-icon')).toBeInTheDocument();
+    expect(screen.queryByTestId('sun-icon')).not.toBeInTheDocument();
   });
 
-  it('calls toggleTheme when button is clicked', () => {
-    const toggleThemeMock = vi.fn();
-    (useTheme as jest.Mock).mockReturnValue({
-      theme: 'light',
-      toggleTheme: toggleThemeMock
-    });
+  it('calls toggleTheme when clicked', () => {
+    const toggleTheme = vi.fn();
+    vi.mock('@/hooks/useTheme', () => ({
+      useTheme: vi.fn(() => ({
+        theme: 'light',
+        toggleTheme
+      }))
+    }));
 
     render(<ThemeToggle />);
     fireEvent.click(screen.getByRole('button'));
-
-    // Check if toggleTheme function was called
-    expect(toggleThemeMock).toHaveBeenCalled();
+    expect(toggleTheme).toHaveBeenCalled();
   });
 });

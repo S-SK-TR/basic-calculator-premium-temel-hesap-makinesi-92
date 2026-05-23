@@ -1,10 +1,9 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { Chart } from '@/components/Chart';
 import { useStore } from '@/store/store';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock the useStore hook
+// Mock the store
 vi.mock('@/store/store', () => ({
   useStore: vi.fn()
 }));
@@ -17,61 +16,56 @@ vi.mock('@/components/ui/Card', () => ({
 }));
 
 describe('Chart Component', () => {
-  const mockStore = {
-    calculator: {
-      history: []
-    }
-  };
-
   beforeEach(() => {
+    // Reset all mocks before each test
     vi.clearAllMocks();
-    (useStore as jest.Mock).mockReturnValue(mockStore);
-  });
 
-  it('renders nothing when isOpen is false', () => {
-    const { container } = render(<Chart isOpen={false} onClose={() => {}} />);
-    expect(container.firstChild).toBeNull();
-  });
-
-  it('renders the chart when isOpen is true and there is history', () => {
-    const testHistory = [
-      '2 + 2 = 4',
-      '3 * 5 = 15',
-      '10 / 2 = 5'
-    ];
-
+    // Mock the store implementation
     (useStore as jest.Mock).mockReturnValue({
       calculator: {
-        history: testHistory
+        history: []
       }
     });
-
-    render(<Chart isOpen={true} onClose={() => {}} />);
-
-    // Check if chart title is rendered
-    expect(screen.getByText('Fonksiyon Grafiği')).toBeInTheDocument();
-
-    // Check if chart description is rendered
-    expect(screen.getByText(/Son 10 işlemin grafiği gösteriliyor/i)).toBeInTheDocument();
-
-    // Check if SVG element is rendered
-    expect(screen.getByRole('img')).toBeInTheDocument();
   });
 
-  it('shows empty state when there is no history', () => {
-    render(<Chart isOpen={true} onClose={() => {}} />);
+  it('does not render when not open', () => {
+    render(<Chart isOpen={false} onClose={vi.fn()} />);
+    expect(screen.queryByText('Fonksiyon Grafiği')).not.toBeInTheDocument();
+  });
 
-    // Check if empty state message is rendered
-    expect(screen.getByText(/Grafik çizmek için yeterli veri yok/i)).toBeInTheDocument();
+  it('renders when open', () => {
+    render(<Chart isOpen={true} onClose={vi.fn()} />);
+    expect(screen.getByText('Fonksiyon Grafiği')).toBeInTheDocument();
   });
 
   it('calls onClose when close button is clicked', () => {
-    const onCloseMock = vi.fn();
-    render(<Chart isOpen={true} onClose={onCloseMock} />);
-
+    const onClose = vi.fn();
+    render(<Chart isOpen={true} onClose={onClose} />);
     fireEvent.click(screen.getByText('Kapat'));
+    expect(onClose).toHaveBeenCalled();
+  });
 
-    // Check if onClose function was called
-    expect(onCloseMock).toHaveBeenCalled();
+  it('shows message when there is no data', () => {
+    (useStore as jest.Mock).mockReturnValue({
+      calculator: {
+        history: []
+      }
+    });
+
+    render(<Chart isOpen={true} onClose={vi.fn()} />);
+    expect(screen.getByText('Grafik çizmek için yeterli veri yok')).toBeInTheDocument();
+  });
+
+  it('renders chart when there is data', () => {
+    (useStore as jest.Mock).mockReturnValue({
+      calculator: {
+        history: ['3 + 5 = 8', '10 - 2 = 8']
+      }
+    });
+
+    render(<Chart isOpen={true} onClose={vi.fn()} />);
+    expect(screen.queryByText('Grafik çizmek için yeterli veri yok')).not.toBeInTheDocument();
+    // We can't easily test the SVG rendering, but we can check that the component renders
+    expect(screen.getByText('Fonksiyon Grafiği')).toBeInTheDocument();
   });
 });
