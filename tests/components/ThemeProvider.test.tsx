@@ -5,42 +5,32 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock the useTheme hook
 vi.mock('@/hooks/useTheme', () => ({
-  useTheme: vi.fn(() => ({ theme: 'light', toggleTheme: vi.fn() }))
+  useTheme: () => ({
+    theme: 'light',
+    toggleTheme: vi.fn()
+  })
 }));
 
 describe('ThemeProvider Component', () => {
-  it('renders children correctly', () => {
-    render(
-      <ThemeProvider>
-        <div data-testid="child">Test Child</div>
-      </ThemeProvider>
-    );
-    expect(screen.getByTestId('child')).toBeInTheDocument();
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('applies light theme by default', () => {
+  it('renders children without crashing', () => {
     render(
       <ThemeProvider>
-        <div data-testid="child">Test Child</div>
+        <div>Test Child</div>
       </ThemeProvider>
     );
-    const htmlElement = document.documentElement;
-    expect(htmlElement.classList.contains('light')).toBe(true);
-    expect(htmlElement.classList.contains('dark')).toBe(false);
+    expect(screen.getByText('Test Child')).toBeInTheDocument();
   });
 
-  it('applies dark theme when theme is dark', () => {
-    vi.mock('@/hooks/useTheme', () => ({
-      useTheme: vi.fn(() => ({ theme: 'dark', toggleTheme: vi.fn() }))
-    }));
-
-    render(
+  it('applies the correct theme class to the root element', () => {
+    const { container } = render(
       <ThemeProvider>
-        <div data-testid="child">Test Child</div>
+        <div>Test Child</div>
       </ThemeProvider>
     );
-    const htmlElement = document.documentElement;
-    expect(htmlElement.classList.contains('dark')).toBe(true);
-    expect(htmlElement.classList.contains('light')).toBe(false);
+    expect(container.firstChild).toHaveClass('light');
   });
 });

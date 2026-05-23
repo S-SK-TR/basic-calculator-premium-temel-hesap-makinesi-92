@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/store/store';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
@@ -22,7 +22,7 @@ const buttonClickVariants = {
 
 // Ekran animasyonu için variants
 const displayVariants = {
-  initial: { opacity: 0, y: 20 },
+  initial: { opacity: 0, y: 10 }, // Slightly adjusted y for a subtle fade-up
   animate: {
     opacity: 1,
     y: 0,
@@ -31,7 +31,8 @@ const displayVariants = {
       damping: 15,
       stiffness: 100
     }
-  }
+  },
+  exit: { opacity: 0, y: -10, transition: { duration: 0.15 } } // Added exit animation
 };
 
 // Butonlar için container variants
@@ -154,21 +155,26 @@ const CalculatorComponent = React.memo(function Calculator() {
     >
       <Card className="flex-1">
         <div className="p-4">
-          <motion.div
-            variants={displayVariants}
-            initial="initial"
-            animate="animate"
-            className="mb-4"
+          <div className="mb-4"
             aria-live="polite"
             aria-atomic="true"
           >
             <div className="text-right text-fluid-sm text-[var(--text-muted)]">
               {previousValue} {operation}
             </div>
-            <div className="text-right text-fluid-xl font-bold text-[var(--text-primary)]">
-              {currentValue}
-            </div>
-          </motion.div>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentValue} // Key prop to trigger re-animation on value change
+                variants={displayVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="text-right text-fluid-xl font-bold text-[var(--text-primary)]"
+              >
+                {currentValue}
+              </motion.div>
+            </AnimatePresence>
+          </div>
 
           <motion.div
             variants={containerVariants}

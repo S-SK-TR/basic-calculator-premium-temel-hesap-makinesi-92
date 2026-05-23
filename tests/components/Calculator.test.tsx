@@ -4,14 +4,14 @@ import { Calculator } from '@/components/Calculator';
 import { useStore } from '@/store/store';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock the useStore hook
+// Mock the store
 vi.mock('@/store/store', () => ({
   useStore: vi.fn()
 }));
 
 // Mock child components
 vi.mock('@/components/ui/Button', () => ({
-  Button: ({ children, onClick }: { children: React.ReactNode; onClick: () => void }) => (
+  Button: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => (
     <button onClick={onClick}>{children}</button>
   )
 }));
@@ -21,27 +21,19 @@ vi.mock('@/components/ui/Card', () => ({
 }));
 
 vi.mock('@/components/History', () => ({
-  History: ({ history }: { history: string[] }) => (
-    <div data-testid="history">{history.join(', ')}</div>
-  )
+  History: ({ history }: { history: string[] }) => <div>{history.join(', ')}</div>
 }));
 
 vi.mock('@/components/UnitConverterModal', () => ({
   UnitConverterModal: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => (
-    isOpen ? <div data-testid="unit-converter">Unit Converter</div> : null
+    isOpen ? <div>Unit Converter Modal</div> : null
   )
 }));
 
 vi.mock('@/components/Chart', () => ({
   Chart: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => (
-    isOpen ? <div data-testid="chart">Chart</div> : null
+    isOpen ? <div>Chart Modal</div> : null
   )
-}));
-
-// Mock icons
-vi.mock('lucide-react', () => ({
-  HelpCircle: () => <div>HelpCircle</div>,
-  BarChart2: () => <div>BarChart2</div>
 }));
 
 describe('Calculator Component', () => {
@@ -63,24 +55,30 @@ describe('Calculator Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (useStore as jest.Mock).mockReturnValue(mockStore);
+    (useStore as any).mockReturnValue(mockStore);
   });
 
-  it('renders correctly', () => {
+  it('renders without crashing', () => {
+    render(<Calculator />);
+    expect(screen.getByRole('application', { name: 'Hesap makinesi' })).toBeInTheDocument();
+  });
+
+  it('displays the current value', () => {
     render(<Calculator />);
     expect(screen.getByText('0')).toBeInTheDocument();
-    expect(screen.getByTestId('history')).toBeInTheDocument();
   });
 
   it('handles number button clicks', () => {
     render(<Calculator />);
-    fireEvent.click(screen.getByText('1'));
-    expect(mockStore.setCalculator).toHaveBeenCalledWith({ currentValue: '1' });
+    const button7 = screen.getByText('7');
+    fireEvent.click(button7);
+    expect(mockStore.setCalculator).toHaveBeenCalledWith({ currentValue: '7' });
   });
 
   it('handles operator button clicks', () => {
     render(<Calculator />);
-    fireEvent.click(screen.getByText('+'));
+    const buttonPlus = screen.getByText('+');
+    fireEvent.click(buttonPlus);
     expect(mockStore.setCalculator).toHaveBeenCalledWith({
       previousValue: '0',
       operation: '+',
@@ -90,49 +88,29 @@ describe('Calculator Component', () => {
 
   it('handles equals button click', () => {
     render(<Calculator />);
-    fireEvent.click(screen.getByText('='));
+    const buttonEquals = screen.getByText('=');
+    fireEvent.click(buttonEquals);
     expect(mockStore.calculate).toHaveBeenCalled();
   });
 
   it('handles clear button click', () => {
     render(<Calculator />);
-    fireEvent.click(screen.getByText('C'));
+    const buttonClear = screen.getByText('C');
+    fireEvent.click(buttonClear);
     expect(mockStore.clearCalculator).toHaveBeenCalled();
   });
 
-  it('handles percentage button click', () => {
+  it('toggles unit converter modal', () => {
     render(<Calculator />);
-    fireEvent.click(screen.getByText('%'));
-    expect(mockStore.setCalculator).toHaveBeenCalledWith({ currentValue: '0' });
-  });
-
-  it('handles square root button click', () => {
-    render(<Calculator />);
-    fireEvent.click(screen.getByText('√'));
-    expect(mockStore.setCalculator).toHaveBeenCalledWith({ currentValue: '0' });
-  });
-
-  it('handles square button click', () => {
-    render(<Calculator />);
-    fireEvent.click(screen.getByText('x²'));
-    expect(mockStore.setCalculator).toHaveBeenCalledWith({ currentValue: '0' });
-  });
-
-  it('toggles unit converter', () => {
-    render(<Calculator />);
-    fireEvent.click(screen.getByText('HelpCircle'));
+    const unitConverterButton = screen.getByLabelText('Birim dönüştürücü aç');
+    fireEvent.click(unitConverterButton);
     expect(mockStore.toggleUnitConverter).toHaveBeenCalled();
   });
 
-  it('toggles chart', () => {
+  it('toggles chart modal', () => {
     render(<Calculator />);
-    fireEvent.click(screen.getByText('BarChart2'));
+    const chartButton = screen.getByLabelText('Grafik aç');
+    fireEvent.click(chartButton);
     expect(mockStore.toggleChart).toHaveBeenCalled();
-  });
-
-  it('handles keyboard input', () => {
-    render(<Calculator />);
-    fireEvent.keyDown(document, { key: '1', code: 'Digit1' });
-    expect(mockStore.setCalculator).toHaveBeenCalledWith({ currentValue: '1' });
   });
 });

@@ -4,27 +4,20 @@ import { Card } from '@/components/ui/Card';
 import { describe, it, expect } from 'vitest';
 
 describe('Card Component', () => {
-  it('renders correctly with default props', () => {
+  it('renders without crashing', () => {
     render(<Card>Test Content</Card>);
-    const card = screen.getByText('Test Content').closest('div');
-    expect(card).toBeInTheDocument();
-    expect(card).toHaveClass('bg-[var(--bg-surface)]');
-    expect(card).toHaveClass('border');
-    expect(card).toHaveClass('rounded-2xl');
+    expect(screen.getByText('Test Content')).toBeInTheDocument();
   });
 
-  it('applies additional className', () => {
-    render(<Card className="custom-class">Test Content</Card>);
-    const card = screen.getByText('Test Content').closest('div');
-    expect(card).toHaveClass('custom-class');
+  it('applies default styling', () => {
+    const { container } = render(<Card>Test Content</Card>);
+    expect(container.firstChild).toHaveClass('bg-[var(--bg-surface)]');
+    expect(container.firstChild).toHaveClass('border');
+    expect(container.firstChild).toHaveClass('rounded-2xl');
   });
 
-  it('renders children correctly', () => {
-    render(
-      <Card>
-        <div data-testid="child">Test Child</div>
-      </Card>
-    );
-    expect(screen.getByTestId('child')).toBeInTheDocument();
+  it('applies additional className when provided', () => {
+    const { container } = render(<Card className="custom-class">Test Content</Card>);
+    expect(container.firstChild).toHaveClass('custom-class');
   });
 });
