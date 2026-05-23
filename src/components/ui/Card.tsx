@@ -18,6 +18,7 @@ export function Card({ className, children, ...props }: CardProps) {
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       className={cn(
         "glass-card rounded-2xl border border-[var(--glass-border)]",
+        "p-4 sm:p-6",
         className
       )}
       {...props}

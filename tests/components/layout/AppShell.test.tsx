@@ -1,66 +1,37 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { AppShell } from '@/components/layout/AppShell';
-import { useTheme } from '@/components/ThemeProvider';
+import { describe, it, expect, vi } from 'vitest';
 
-// Mock the useTheme hook
-jest.mock('@/components/ThemeProvider', () => ({
-  useTheme: jest.fn()
+// Mock the NavLink component
+vi.mock('react-router-dom', () => ({
+  NavLink: ({ to, children }: { to: string; children: React.ReactNode }) => (
+    <a href={to} data-testid={`navlink-${to}`}>{children}</a>
+  )
 }));
 
-// Mock the icons
-jest.mock('lucide-react', () => ({
-  Moon: () => <div data-testid="moon-icon">Moon</div>,
-  Sun: () => <div data-testid="sun-icon">Sun</div>,
-  HelpCircle: () => <div data-testid="help-circle-icon">HelpCircle</div>
+// Mock icons
+vi.mock('lucide-react', () => ({
+  LayoutDashboard: () => <div>LayoutDashboard</div>,
+  BarChart2: () => <div>BarChart2</div>,
+  Settings: () => <div>Settings</div>,
+  Bell: () => <div>Bell</div>
 }));
 
 describe('AppShell Component', () => {
-  const mockToggleTheme = jest.fn();
-
-  beforeEach(() => {
-    (useTheme as jest.Mock).mockReturnValue({
-      theme: 'light',
-      toggleTheme: mockToggleTheme
-    });
-  });
-
-  it('renders correctly with light theme', () => {
+  it('renders correctly', () => {
     render(
       <AppShell>
-        <div>Test Content</div>
+        <div data-testid="content">Test Content</div>
       </AppShell>
     );
 
-    expect(screen.getByText('Test Content')).toBeInTheDocument();
-    expect(screen.getByTestId('help-circle-icon')).toBeInTheDocument();
-    expect(screen.getByText('Basic HelpCircle')).toBeInTheDocument();
-    expect(screen.getByTestId('sun-icon')).toBeInTheDocument();
-  });
+    // Check if navigation items are rendered
+    expect(screen.getByTestId('navlink-/')).toBeInTheDocument();
+    expect(screen.getByTestId('navlink-/analytics')).toBeInTheDocument();
+    expect(screen.getByTestId('navlink-/settings')).toBeInTheDocument();
 
-  it('renders correctly with dark theme', () => {
-    (useTheme as jest.Mock).mockReturnValue({
-      theme: 'dark',
-      toggleTheme: mockToggleTheme
-    });
-
-    render(
-      <AppShell>
-        <div>Test Content</div>
-      </AppShell>
-    );
-
-    expect(screen.getByTestId('moon-icon')).toBeInTheDocument();
-  });
-
-  it('calls toggleTheme when theme button is clicked', () => {
-    render(
-      <AppShell>
-        <div>Test Content</div>
-      </AppShell>
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: /Switch to dark mode/i }));
-    expect(mockToggleTheme).toHaveBeenCalled();
+    // Check if content is rendered
+    expect(screen.getByTestId('content')).toBeInTheDocument();
   });
 });

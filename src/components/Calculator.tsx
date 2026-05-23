@@ -162,10 +162,10 @@ const CalculatorComponent = React.memo(function Calculator() {
             aria-live="polite"
             aria-atomic="true"
           >
-            <div className="text-right text-sm text-[var(--text-muted)]">
+            <div className="text-right text-fluid-sm text-[var(--text-muted)]">
               {previousValue} {operation}
             </div>
-            <div className="text-right text-3xl font-bold text-[var(--text-primary)]">
+            <div className="text-right text-fluid-xl font-bold text-[var(--text-primary)]">
               {currentValue}
             </div>
           </motion.div>
@@ -182,12 +182,13 @@ const CalculatorComponent = React.memo(function Calculator() {
                 whileTap="tap"
                 whileHover="hover"
                 variants={buttonClickVariants}
+                className="touch-target"
               >
                 <Button
                   onClick={() => handleButtonClick(button.label)}
                   variant={button.type === 'number' ? 'primary' :
                            button.type === 'operator' ? 'operator' : 'function'}
-                  className={`h-12 sm:h-14 text-base sm:text-lg font-medium touch-pinch-zoom focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+                  className={`h-12 sm:h-14 text-fluid-base sm:text-fluid-lg font-medium touch-pinch-zoom focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
                   aria-label={`Buton ${button.label}`}
                 >
                   {button.label}
@@ -199,11 +200,12 @@ const CalculatorComponent = React.memo(function Calculator() {
               whileTap="tap"
               whileHover="hover"
               variants={buttonClickVariants}
+              className="touch-target"
             >
               <Button
                 onClick={toggleUnitConverter}
                 variant="function"
-                className="h-12 sm:h-14 text-base sm:text-lg font-medium touch-pinch-zoom focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="h-12 sm:h-14 text-fluid-base sm:text-fluid-lg font-medium touch-pinch-zoom focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 aria-label="Birim dönüştürücü aç"
               >
                 <HelpCircle size={20} />
@@ -214,11 +216,12 @@ const CalculatorComponent = React.memo(function Calculator() {
               whileTap="tap"
               whileHover="hover"
               variants={buttonClickVariants}
+              className="touch-target"
             >
               <Button
                 onClick={toggleChart}
                 variant="function"
-                className="h-12 sm:h-14 text-base sm:text-lg font-medium touch-pinch-zoom focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="h-12 sm:h-14 text-fluid-base sm:text-fluid-lg font-medium touch-pinch-zoom focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 aria-label="Grafik aç"
               >
                 <BarChart2 size={20} />
@@ -230,7 +233,7 @@ const CalculatorComponent = React.memo(function Calculator() {
 
       <Card className="lg:w-80">
         <div className="p-4">
-          <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-[var(--text-primary)]">Geçmiş</h3>
+          <h3 className="text-fluid-base sm:text-fluid-lg font-semibold mb-3 sm:mb-4 text-[var(--text-primary)]">Geçmiş</h3>
           <History history={history} />
         </div>
       </Card>

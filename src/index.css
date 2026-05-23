@@ -15,6 +15,8 @@
   --brand-50: 217 91% 90%;
   --brand-500: 217 91% 60%;
   --brand-600: 217 91% 50%;
+  --safe-area-inset-top: env(safe-area-inset-top);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
 }
 
 /* ── Light Mode Tokens ── */
@@ -30,6 +32,8 @@
   --brand-50: 217 91% 90%;
   --brand-500: 217 91% 60%;
   --brand-600: 217 91% 50%;
+  --safe-area-inset-top: env(safe-area-inset-top);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
 }
 
 body {
@@ -86,4 +90,36 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
+}
+
+/* Responsive Typography */
+@layer utilities {
+  .text-fluid-xs {
+    font-size: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+    line-height: 1.25;
+  }
+  .text-fluid-sm {
+    font-size: clamp(0.875rem, 0.8rem + 0.25vw, 1rem);
+    line-height: 1.5;
+  }
+  .text-fluid-base {
+    font-size: clamp(1rem, 0.9rem + 0.25vw, 1.125rem);
+    line-height: 1.5;
+  }
+  .text-fluid-lg {
+    font-size: clamp(1.125rem, 1rem + 0.25vw, 1.25rem);
+    line-height: 1.5;
+  }
+  .text-fluid-xl {
+    font-size: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem);
+    line-height: 1.4;
+  }
+}
+
+/* Touch Target Optimization */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }

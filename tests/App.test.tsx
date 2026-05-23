@@ -2,66 +2,66 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import App from '@/App';
 import { useStore } from '@/store/store';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock the useStore hook
-jest.mock('@/store/store', () => ({
-  useStore: jest.fn()
+vi.mock('@/store/store', () => ({
+  useStore: vi.fn()
 }));
 
-// Mock the ThemeProvider
-jest.mock('@/components/ThemeProvider', () => ({
-  ThemeProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  useTheme: () => ({ theme: 'light', toggleTheme: jest.fn() })
+// Mock the ThemeProvider and AppShell components
+vi.mock('@/components/ThemeProvider', () => ({
+  ThemeProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
 }));
 
-// Mock the AppShell
-jest.mock('@/components/layout/AppShell', () => ({
+vi.mock('@/components/layout/AppShell', () => ({
   AppShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
 }));
 
 // Mock the Calculator component
-jest.mock('@/components/Calculator', () => ({
+vi.mock('@/components/Calculator', () => ({
   Calculator: () => <div data-testid="calculator">Calculator</div>
 }));
 
 // Mock the ThemeToggle component
-jest.mock('@/components/ui/ThemeToggle', () => ({
-  ThemeToggle: () => <button data-testid="theme-toggle">Toggle Theme</button>
+vi.mock('@/components/ui/ThemeToggle', () => ({
+  ThemeToggle: () => <button data-testid="theme-toggle">Theme Toggle</button>
+}));
+
+// Mock the WifiOff icon
+vi.mock('lucide-react', () => ({
+  WifiOff: () => <div>WifiOff</div>
 }));
 
 describe('App Component', () => {
   beforeEach(() => {
+    // Reset all mocks before each test
+    vi.clearAllMocks();
     // Mock the store implementation
-    (useStore as jest.Mock).mockImplementation((selector) => {
-      const state = {
-        theme: 'light',
-        setTheme: jest.fn(),
-        calculator: {
-          currentValue: '0',
-          previousValue: '',
-          operation: '',
-          history: [],
-          isUnitConverterOpen: false,
-          isChartOpen: false
-        },
-        setCalculator: jest.fn(),
-        calculate: jest.fn(),
-        clearCalculator: jest.fn(),
-        toggleUnitConverter: jest.fn(),
-        toggleChart: jest.fn(),
-        clearHistory: jest.fn()
-      };
-      return selector(state);
-    });
+    (useStore as jest.Mock).mockImplementation(() => ({
+      calculator: {
+        currentValue: '0',
+        previousValue: '',
+        operation: '',
+        history: [],
+        isUnitConverterOpen: false,
+        isChartOpen: false
+      },
+      setCalculator: vi.fn(),
+      calculate: vi.fn(),
+      clearCalculator: vi.fn(),
+      toggleUnitConverter: vi.fn(),
+      toggleChart: vi.fn()
+    }));
   });
 
-  it('renders without crashing', () => {
+  it('renders correctly', () => {
     render(<App />);
     expect(screen.getByTestId('calculator')).toBeInTheDocument();
     expect(screen.getByTestId('theme-toggle')).toBeInTheDocument();
   });
 
-  it('shows offline banner when network is offline', () => {
+  it('shows offline banner when not online', () => {
     // Mock navigator.onLine to be false
     Object.defineProperty(window.navigator, 'onLine', { value: false, configurable: true });
 
@@ -69,7 +69,7 @@ describe('App Component', () => {
     expect(screen.getByText(/Çevrimdışı/i)).toBeInTheDocument();
   });
 
-  it('does not show offline banner when network is online', () => {
+  it('does not show offline banner when online', () => {
     // Mock navigator.onLine to be true
     Object.defineProperty(window.navigator, 'onLine', { value: true, configurable: true });
 

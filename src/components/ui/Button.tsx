@@ -25,10 +25,13 @@ export function Button({
       disabled={disabled || isLoading}
       className={cn(
         "inline-flex items-center justify-center rounded-xl font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none",
-        "glass-morphism",
+        "glass-button",
         "backdrop-blur-sm",
         "border border-[var(--glass-border)]",
         "shadow-sm shadow-[var(--glass-glow)]",
+        "touch-target",
+        "touch-action-manipulation",
+        "min-h-[44px] min-w-[44px]",
         {
           'bg-gradient-to-br from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 text-white': variant === 'primary',
           'bg-[var(--glass-bg)] hover:bg-[var(--glass-border)] text-[var(--text-primary)]': variant === 'secondary',

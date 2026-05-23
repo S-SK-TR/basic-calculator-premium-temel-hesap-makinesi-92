@@ -63,6 +63,16 @@ export function AppShell({ children }: AppShellProps) {
           </div>
         </div>
       </footer>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-[var(--glass-bg)]/90 backdrop-blur-xl border-t border-[var(--glass-border)] pb-[var(--safe-area-inset-bottom)]">
+        <div className="flex h-16">
+          <button className="flex-1 flex flex-col items-center justify-center gap-1 text-[10px] font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+            <HelpCircleIcon size={20} />
+            Hesap Makinesi
+          </button>
+        </div>
+      </nav>
     </div>
   );
 }

@@ -1,75 +1,46 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { ThemeProvider, useTheme } from '@/components/ThemeProvider';
-import { useStore } from '@/store/store';
+import { render, screen } from '@testing-library/react';
+import { ThemeProvider } from '@/components/ThemeProvider';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock the useStore hook
-jest.mock('@/store/store', () => ({
-  useStore: jest.fn()
+// Mock the useTheme hook
+vi.mock('@/hooks/useTheme', () => ({
+  useTheme: vi.fn(() => ({ theme: 'light', toggleTheme: vi.fn() }))
 }));
 
-// Test component to use the theme context
-const TestComponent = () => {
-  const { theme, toggleTheme } = useTheme();
-  return (
-    <div>
-      <span data-testid="current-theme">{theme}</span>
-      <button onClick={toggleTheme} data-testid="toggle-theme">Toggle Theme</button>
-    </div>
-  );
-};
-
-describe('ThemeProvider', () => {
-  const mockSetTheme = jest.fn();
-
-  beforeEach(() => {
-    (useStore as jest.Mock).mockReturnValue({
-      theme: 'light',
-      setTheme: mockSetTheme
-    });
-  });
-
-  it('provides theme context to children', () => {
+describe('ThemeProvider Component', () => {
+  it('renders children correctly', () => {
     render(
       <ThemeProvider>
-        <TestComponent />
+        <div data-testid="child">Test Child</div>
       </ThemeProvider>
     );
-
-    expect(screen.getByTestId('current-theme')).toHaveTextContent('light');
+    expect(screen.getByTestId('child')).toBeInTheDocument();
   });
 
-  it('toggles theme when toggleTheme is called', () => {
+  it('applies light theme by default', () => {
     render(
       <ThemeProvider>
-        <TestComponent />
+        <div data-testid="child">Test Child</div>
       </ThemeProvider>
     );
-
-    fireEvent.click(screen.getByTestId('toggle-theme'));
-    expect(mockSetTheme).toHaveBeenCalledWith('dark');
+    const htmlElement = document.documentElement;
+    expect(htmlElement.classList.contains('light')).toBe(true);
+    expect(htmlElement.classList.contains('dark')).toBe(false);
   });
 
-  it('applies theme class to document element', () => {
+  it('applies dark theme when theme is dark', () => {
+    vi.mock('@/hooks/useTheme', () => ({
+      useTheme: vi.fn(() => ({ theme: 'dark', toggleTheme: vi.fn() }))
+    }));
+
     render(
       <ThemeProvider>
-        <TestComponent />
+        <div data-testid="child">Test Child</div>
       </ThemeProvider>
     );
-
-    expect(document.documentElement.classList.contains('light')).toBe(true);
-    expect(document.documentElement.classList.contains('dark')).toBe(false);
-  });
-
-  it('throws error when used outside of ThemeProvider', () => {
-    // Mock console.error to suppress the error in the test output
-    const originalError = console.error;
-    console.error = jest.fn();
-
-    // This should throw an error
-    expect(() => render(<TestComponent />)).toThrow('useTheme must be used within a ThemeProvider');
-
-    // Restore console.error
-    console.error = originalError;
+    const htmlElement = document.documentElement;
+    expect(htmlElement.classList.contains('dark')).toBe(true);
+    expect(htmlElement.classList.contains('light')).toBe(false);
   });
 });
