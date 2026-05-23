@@ -1,20 +1,40 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/store/store';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 import { History } from './History';
+import { UnitConverterModal } from './UnitConverterModal';
+import { Chart } from './Chart';
+import { HelpCircle, BarChart2 } from 'lucide-react';
 
-// PREMIUM UI: Premium hesap makinesi bileşeni
-// PREMIUM UI: Glassmorphism efektleri ve animasyonlar
-// PREMIUM UI: Framer Motion ile dinamik animasyonlar
-
-const buttonVariants = {
-  initial: { opacity: 0, scale: 0.95 },
-  animate: { opacity: 1, scale: 1 },
-  transition: { duration: 0.2 }
+// Buton tıklama animasyonu için variants
+const buttonClickVariants = {
+  tap: {
+    scale: 0.95,
+    transition: { duration: 0.1 }
+  },
+  hover: {
+    scale: 1.02,
+    transition: { duration: 0.2 }
+  }
 };
 
+// Ekran animasyonu için variants
+const displayVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: 'spring',
+      damping: 15,
+      stiffness: 100
+    }
+  }
+};
+
+// Butonlar için container variants
 const containerVariants = {
   animate: {
     transition: {
@@ -23,44 +43,40 @@ const containerVariants = {
   }
 };
 
-const buttonClasses = {
-  number: "bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 border-brand-500/20",
-  operation: "bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 border-blue-500/20",
-  clear: "bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border-rose-500/20",
-  equals: "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border-emerald-500/20"
-};
-
 const buttons = [
-  { label: '7', type: 'number' },
-  { label: '8', type: 'number' },
-  { label: '9', type: 'number' },
-  { label: '/', type: 'operation' },
-  { label: '4', type: 'number' },
-  { label: '5', type: 'number' },
-  { label: '6', type: 'number' },
-  { label: '*', type: 'operation' },
-  { label: '1', type: 'number' },
-  { label: '2', type: 'number' },
-  { label: '3', type: 'number' },
-  { label: '-', type: 'operation' },
-  { label: '0', type: 'number' },
-  { label: '.', type: 'number' },
-  { label: '=', type: 'equals' },
-  { label: '+', type: 'operation' },
-  { label: 'C', type: 'clear' }
+  { label: '7', type: 'number', key: 'Digit7' },
+  { label: '8', type: 'number', key: 'Digit8' },
+  { label: '9', type: 'number', key: 'Digit9' },
+  { label: '/', type: 'operator', key: 'Slash' },
+  { label: '4', type: 'number', key: 'Digit4' },
+  { label: '5', type: 'number', key: 'Digit5' },
+  { label: '6', type: 'number', key: 'Digit6' },
+  { label: '*', type: 'operator', key: 'KeyM' },
+  { label: '1', type: 'number', key: 'Digit1' },
+  { label: '2', type: 'number', key: 'Digit2' },
+  { label: '3', type: 'number', key: 'Digit3' },
+  { label: '-', type: 'operator', key: 'Minus' },
+  { label: '0', type: 'number', key: 'Digit0' },
+  { label: '.', type: 'number', key: 'Period' },
+  { label: '=', type: 'function', key: 'Enter' },
+  { label: '+', type: 'operator', key: 'Equal' },
+  { label: 'C', type: 'function', key: 'KeyC' },
+  { label: '%', type: 'function', key: 'KeyP' },
+  { label: '√', type: 'function', key: 'KeyR' },
+  { label: 'x²', type: 'function', key: 'KeyX' }
 ];
 
-// PREMIUM UI: Hesap makinesi bileşeni
-// PREMIUM UI: Framer Motion ile animasyonlu girişler
-// PREMIUM UI: Premium UI bileşenleri kullanılıyor
-
-export function Calculator() {
+const CalculatorComponent = React.memo(function Calculator() {
   const {
-    calculator: { currentValue, previousValue, operation, history },
+    calculator: { currentValue, previousValue, operation, history, isUnitConverterOpen, isChartOpen },
     setCalculator,
     calculate,
-    clearCalculator
+    clearCalculator,
+    toggleUnitConverter,
+    toggleChart
   } = useStore();
+
+  const calculatorRef = useRef<HTMLDivElement>(null);
 
   const handleButtonClick = (value: string) => {
     if (value === 'C') {
@@ -78,13 +94,26 @@ export function Calculator() {
       return;
     }
 
-    // Sıfırdan sonra gelen rakamları temizle
+    if (value === '%') {
+      setCalculator({ currentValue: (parseFloat(currentValue) / 100).toString() });
+      return;
+    }
+
+    if (value === '√') {
+      setCalculator({ currentValue: Math.sqrt(parseFloat(currentValue)).toString() });
+      return;
+    }
+
+    if (value === 'x²') {
+      setCalculator({ currentValue: (parseFloat(currentValue) ** 2).toString() });
+      return;
+    }
+
     if (currentValue === '0' && value !== '.') {
       setCalculator({ currentValue: value });
       return;
     }
 
-    // Nokta ekleme kontrolü
     if (value === '.' && currentValue.includes('.')) {
       return;
     }
@@ -92,47 +121,131 @@ export function Calculator() {
     setCalculator({ currentValue: currentValue + value });
   };
 
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (!calculatorRef.current?.contains(document.activeElement)) return;
+
+    const keyMap: Record<string, string> = {
+      'Escape': 'C',
+      'Backspace': 'C',
+      'Enter': '='
+    };
+
+    const button = buttons.find(b => b.key === e.code);
+    if (button) {
+      e.preventDefault();
+      handleButtonClick(button.label);
+    } else if (keyMap[e.code]) {
+      e.preventDefault();
+      handleButtonClick(keyMap[e.code]);
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentValue]);
+
   return (
-    <div className="flex flex-col lg:flex-row gap-6">
-      {/* Calculator Card */}
+    <div
+      ref={calculatorRef}
+      className="flex flex-col lg:flex-row gap-4"
+      role="application"
+      aria-label="Hesap makinesi"
+    >
       <Card className="flex-1">
-        <div className="p-6">
-          <div className="mb-4">
+        <div className="p-4">
+          <motion.div
+            variants={displayVariants}
+            initial="initial"
+            animate="animate"
+            className="mb-4"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             <div className="text-right text-sm text-[var(--text-muted)]">
               {previousValue} {operation}
             </div>
-            <div className="text-right text-4xl font-bold">
+            <div className="text-right text-3xl font-bold text-[var(--text-primary)]">
               {currentValue}
             </div>
-          </div>
+          </motion.div>
 
           <motion.div
             variants={containerVariants}
             initial="initial"
             animate="animate"
-            className="grid grid-cols-4 gap-3"
+            className="grid grid-cols-4 gap-2 sm:gap-3"
           >
             {buttons.map((button, index) => (
-              <motion.div key={index} variants={buttonVariants}>
+              <motion.div
+                key={index}
+                whileTap="tap"
+                whileHover="hover"
+                variants={buttonClickVariants}
+              >
                 <Button
                   onClick={() => handleButtonClick(button.label)}
-                  className={`h-14 text-lg font-medium ${buttonClasses[button.type as keyof typeof buttonClasses]}`}
+                  variant={button.type === 'number' ? 'primary' :
+                           button.type === 'operator' ? 'operator' : 'function'}
+                  className={`h-12 sm:h-14 text-base sm:text-lg font-medium touch-pinch-zoom focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+                  aria-label={`Buton ${button.label}`}
                 >
                   {button.label}
                 </Button>
               </motion.div>
             ))}
+
+            <motion.div
+              whileTap="tap"
+              whileHover="hover"
+              variants={buttonClickVariants}
+            >
+              <Button
+                onClick={toggleUnitConverter}
+                variant="function"
+                className="h-12 sm:h-14 text-base sm:text-lg font-medium touch-pinch-zoom focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                aria-label="Birim dönüştürücü aç"
+              >
+                <HelpCircle size={20} />
+              </Button>
+            </motion.div>
+
+            <motion.div
+              whileTap="tap"
+              whileHover="hover"
+              variants={buttonClickVariants}
+            >
+              <Button
+                onClick={toggleChart}
+                variant="function"
+                className="h-12 sm:h-14 text-base sm:text-lg font-medium touch-pinch-zoom focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                aria-label="Grafik aç"
+              >
+                <BarChart2 size={20} />
+              </Button>
+            </motion.div>
           </motion.div>
         </div>
       </Card>
 
-      {/* History Card */}
       <Card className="lg:w-80">
-        <div className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Geçmiş</h3>
+        <div className="p-4">
+          <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-[var(--text-primary)]">Geçmiş</h3>
           <History history={history} />
         </div>
       </Card>
+
+      <UnitConverterModal
+        isOpen={isUnitConverterOpen}
+        onClose={toggleUnitConverter}
+      />
+
+      <Chart
+        isOpen={isChartOpen}
+        onClose={toggleChart}
+      />
     </div>
   );
-}
+});
+
+export const Calculator = React.memo(CalculatorComponent);

@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 interface CalculatorState {
@@ -6,6 +6,8 @@ interface CalculatorState {
   previousValue: string;
   operation: string | null;
   history: string[];
+  isUnitConverterOpen: boolean;
+  isChartOpen: boolean;
 }
 
 interface CalculatorActions {
@@ -14,6 +16,9 @@ interface CalculatorActions {
   calculate: () => void;
   clear: () => void;
   addToHistory: (entry: string) => void;
+  clearHistory: () => void;
+  toggleUnitConverter: () => void;
+  toggleChart: () => void;
 }
 
 interface AppState {
@@ -26,6 +31,9 @@ interface AppActions {
   setCalculator: (calculator: Partial<CalculatorState>) => void;
   calculate: () => void;
   clearCalculator: () => void;
+  clearHistory: () => void;
+  toggleUnitConverter: () => void;
+  toggleChart: () => void;
 }
 
 export const useStore = create<AppState & AppActions>()(
@@ -36,10 +44,15 @@ export const useStore = create<AppState & AppActions>()(
         currentValue: '0',
         previousValue: '',
         operation: null,
-        history: []
+        history: [],
+        isUnitConverterOpen: false,
+        isChartOpen: false
       },
       
-      setTheme: (theme) => set({ theme }),
+      setTheme: (theme) => {
+        set({ theme });
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+      },
       
       setCalculator: (calculator) => set((state) => ({
         calculator: { ...state.calculator, ...calculator }
@@ -58,6 +71,9 @@ export const useStore = create<AppState & AppActions>()(
           case '-': result = prev - current; break;
           case '*': result = prev * current; break;
           case '/': result = prev / current; break;
+          case '%': result = prev % current; break;
+          case '√': result = Math.sqrt(prev); break;
+          case 'x²': result = prev * prev; break;
           default: return state;
         }
         
@@ -79,6 +95,27 @@ export const useStore = create<AppState & AppActions>()(
           currentValue: '0',
           previousValue: '',
           operation: null
+        }
+      })),
+      
+      clearHistory: () => set((state) => ({
+        calculator: {
+          ...state.calculator,
+          history: []
+        }
+      })),
+      
+      toggleUnitConverter: () => set((state) => ({
+        calculator: {
+          ...state.calculator,
+          isUnitConverterOpen: !state.calculator.isUnitConverterOpen
+        }
+      })),
+      
+      toggleChart: () => set((state) => ({
+        calculator: {
+          ...state.calculator,
+          isChartOpen: !state.calculator.isChartOpen
         }
       }))
     }),

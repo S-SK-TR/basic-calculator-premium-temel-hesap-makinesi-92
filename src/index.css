@@ -40,7 +40,6 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Tema geçişleri için sadece body'de transition */
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -57,6 +56,15 @@ body {
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Button Glassmorphism */
+.glass-button {
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.2);
 }
 
 /* Yardımcı geçiş sınıfı — Framer Motion kullanılmayan öğeler için */
