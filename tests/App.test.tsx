@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import App from '@/App';
-import { useStore } from '@/store/store';
+import App from '../src/App';
+import { useStore } from '../src/store/store';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock the store

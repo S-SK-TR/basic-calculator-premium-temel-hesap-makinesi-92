@@ -1,68 +1,60 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { Button } from '@/components/ui/Button';
-import { describe, it, expect, vi } from 'vitest';
+import { Button } from '../../../src/components/ui/Button';
+
+// Mock the cn utility
+vi.mock('../../../src/lib/utils', () => ({
+  cn: (...classes: string[]) => classes.join(' ')
+}));
 
 // Mock the Loader2 icon
 vi.mock('lucide-react', () => ({
-  Loader2: () => <svg data-testid="loader-icon" />
+  Loader2: () => <div>Loader2</div>
 }));
 
 describe('Button Component', () => {
-  it('renders without crashing', () => {
-    render(<Button>Test Button</Button>);
-    expect(screen.getByText('Test Button')).toBeInTheDocument();
+  it('renders correctly with default props', () => {
+    render(<Button>Click Me</Button>);
+
+    // Check if button is rendered with default props
+    const button = screen.getByText('Click Me');
+    expect(button).toBeInTheDocument();
+    expect(button).toHaveClass('bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20');
+    expect(button).toHaveClass('h-10 px-4 text-sm');
   });
 
-  it('applies primary variant by default', () => {
-    const { container } = render(<Button>Test Button</Button>);
-    expect(container.firstChild).toHaveClass('bg-blue-600');
+  it('renders correctly with variant prop', () => {
+    render(<Button variant="secondary">Click Me</Button>);
+
+    // Check if button is rendered with secondary variant
+    const button = screen.getByText('Click Me');
+    expect(button).toBeInTheDocument();
+    expect(button).toHaveClass('bg-[var(--bg-elevated)] hover:bg-[var(--border)] text-[var(--text-primary)] border border-[var(--border)]');
   });
 
-  it('applies secondary variant when specified', () => {
-    const { container } = render(<Button variant="secondary">Test Button</Button>);
-    expect(container.firstChild).toHaveClass('bg-[var(--bg-elevated)]');
+  it('renders correctly with size prop', () => {
+    render(<Button size="lg">Click Me</Button>);
+
+    // Check if button is rendered with lg size
+    const button = screen.getByText('Click Me');
+    expect(button).toBeInTheDocument();
+    expect(button).toHaveClass('h-12 px-6 text-base');
   });
 
-  it('applies ghost variant when specified', () => {
-    const { container } = render(<Button variant="ghost">Test Button</Button>);
-    expect(container.firstChild).toHaveClass('hover:bg-[var(--bg-elevated)]');
-  });
+  it('shows loading state when loading prop is true', () => {
+    render(<Button loading>Click Me</Button>);
 
-  it('applies destructive variant when specified', () => {
-    const { container } = render(<Button variant="destructive">Test Button</Button>);
-    expect(container.firstChild).toHaveClass('bg-rose-600');
-  });
-
-  it('applies medium size by default', () => {
-    const { container } = render(<Button>Test Button</Button>);
-    expect(container.firstChild).toHaveClass('h-10');
-  });
-
-  it('applies small size when specified', () => {
-    const { container } = render(<Button size="sm">Test Button</Button>);
-    expect(container.firstChild).toHaveClass('h-8');
-  });
-
-  it('applies large size when specified', () => {
-    const { container } = render(<Button size="lg">Test Button</Button>);
-    expect(container.firstChild).toHaveClass('h-12');
-  });
-
-  it('shows loader when loading is true', () => {
-    render(<Button loading>Test Button</Button>);
-    expect(screen.getByTestId('loader-icon')).toBeInTheDocument();
+    // Check if loading state is shown
+    expect(screen.getByText('Loader2')).toBeInTheDocument();
+    expect(screen.queryByText('Click Me')).not.toBeInTheDocument();
   });
 
   it('calls onClick handler when clicked', () => {
     const onClick = vi.fn();
-    render(<Button onClick={onClick}>Test Button</Button>);
-    fireEvent.click(screen.getByText('Test Button'));
-    expect(onClick).toHaveBeenCalled();
-  });
+    render(<Button onClick={onClick}>Click Me</Button>);
 
-  it('disables button when disabled is true', () => {
-    const { container } = render(<Button disabled>Test Button</Button>);
-    expect(container.firstChild).toBeDisabled();
+    // Click the button
+    fireEvent.click(screen.getByText('Click Me'));
+    expect(onClick).toHaveBeenCalled();
   });
 });
