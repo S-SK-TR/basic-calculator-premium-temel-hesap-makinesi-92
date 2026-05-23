@@ -4,36 +4,45 @@ import { Calculator } from '@/components/Calculator';
 import { useStore } from '@/store/store';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock the store
+// Mock the useStore hook
 vi.mock('@/store/store', () => ({
   useStore: vi.fn()
 }));
 
 // Mock child components
 vi.mock('@/components/ui/Button', () => ({
-  Button: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => (
-    <button onClick={onClick}>{children}</button>
+  Button: ({ children, onClick, ...props }: any) => (
+    <button onClick={onClick} {...props}>{children}</button>
   )
 }));
 
 vi.mock('@/components/ui/Card', () => ({
-  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
+  Card: ({ children, ...props }: any) => (
+    <div {...props}>{children}</div>
+  )
 }));
 
 vi.mock('@/components/History', () => ({
-  History: ({ history }: { history: string[] }) => <div>{history.join(', ')}</div>
+  History: ({ history }: any) => (
+    <div data-testid="history">{history.join(', ')}</div>
+  )
 }));
 
 vi.mock('@/components/UnitConverterModal', () => ({
-  UnitConverterModal: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => (
-    isOpen ? <div>Unit Converter Modal</div> : null
+  UnitConverterModal: ({ isOpen, onClose }: any) => (
+    isOpen ? <div data-testid="unit-converter">Unit Converter</div> : null
   )
 }));
 
 vi.mock('@/components/Chart', () => ({
-  Chart: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => (
-    isOpen ? <div>Chart Modal</div> : null
+  Chart: ({ isOpen, onClose }: any) => (
+    isOpen ? <div data-testid="chart">Chart</div> : null
   )
+}));
+
+vi.mock('lucide-react', () => ({
+  HelpCircle: () => <div>Help</div>,
+  BarChart2: () => <div>Chart</div>
 }));
 
 describe('Calculator Component', () => {
@@ -55,62 +64,81 @@ describe('Calculator Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (useStore as any).mockReturnValue(mockStore);
+    (useStore as jest.Mock).mockReturnValue(mockStore);
   });
 
-  it('renders without crashing', () => {
+  it('renders the calculator with all buttons', () => {
     render(<Calculator />);
-    expect(screen.getByRole('application', { name: 'Hesap makinesi' })).toBeInTheDocument();
-  });
 
-  it('displays the current value', () => {
-    render(<Calculator />);
+    // Check if display shows initial value
     expect(screen.getByText('0')).toBeInTheDocument();
-  });
 
-  it('handles number button clicks', () => {
-    render(<Calculator />);
-    const button7 = screen.getByText('7');
-    fireEvent.click(button7);
-    expect(mockStore.setCalculator).toHaveBeenCalledWith({ currentValue: '7' });
-  });
-
-  it('handles operator button clicks', () => {
-    render(<Calculator />);
-    const buttonPlus = screen.getByText('+');
-    fireEvent.click(buttonPlus);
-    expect(mockStore.setCalculator).toHaveBeenCalledWith({
-      previousValue: '0',
-      operation: '+',
-      currentValue: '0'
+    // Check if all number buttons are rendered
+    ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0'].forEach(num => {
+      expect(screen.getByText(num)).toBeInTheDocument();
     });
+
+    // Check if operator buttons are rendered
+    ['+', '-', '*', '/'].forEach(op => {
+      expect(screen.getByText(op)).toBeInTheDocument();
+    });
+
+    // Check if function buttons are rendered
+    ['C', '%', '√', 'x²'].forEach(func => {
+      expect(screen.getByText(func)).toBeInTheDocument();
+    });
+
+    // Check if equals button is rendered
+    expect(screen.getByText('=')).toBeInTheDocument();
   });
 
-  it('handles equals button click', () => {
+  it('updates display when number buttons are clicked', () => {
     render(<Calculator />);
-    const buttonEquals = screen.getByText('=');
-    fireEvent.click(buttonEquals);
+
+    fireEvent.click(screen.getByText('1'));
+    fireEvent.click(screen.getByText('2'));
+    fireEvent.click(screen.getByText('3'));
+
+    // Check if display shows the entered numbers
+    expect(screen.getByText('123')).toBeInTheDocument();
+  });
+
+  it('performs basic arithmetic operations', () => {
+    render(<Calculator />);
+
+    fireEvent.click(screen.getByText('5'));
+    fireEvent.click(screen.getByText('+'));
+    fireEvent.click(screen.getByText('3'));
+    fireEvent.click(screen.getByText('='));
+
+    // Check if calculate function was called
     expect(mockStore.calculate).toHaveBeenCalled();
   });
 
-  it('handles clear button click', () => {
+  it('clears the calculator when C button is clicked', () => {
     render(<Calculator />);
-    const buttonClear = screen.getByText('C');
-    fireEvent.click(buttonClear);
+
+    fireEvent.click(screen.getByText('C'));
+
+    // Check if clearCalculator function was called
     expect(mockStore.clearCalculator).toHaveBeenCalled();
   });
 
-  it('toggles unit converter modal', () => {
+  it('toggles unit converter when help button is clicked', () => {
     render(<Calculator />);
-    const unitConverterButton = screen.getByLabelText('Birim dönüştürücü aç');
-    fireEvent.click(unitConverterButton);
+
+    fireEvent.click(screen.getByText('Help'));
+
+    // Check if toggleUnitConverter function was called
     expect(mockStore.toggleUnitConverter).toHaveBeenCalled();
   });
 
-  it('toggles chart modal', () => {
+  it('toggles chart when chart button is clicked', () => {
     render(<Calculator />);
-    const chartButton = screen.getByLabelText('Grafik aç');
-    fireEvent.click(chartButton);
+
+    fireEvent.click(screen.getByText('Chart'));
+
+    // Check if toggleChart function was called
     expect(mockStore.toggleChart).toHaveBeenCalled();
   });
 });

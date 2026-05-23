@@ -1,52 +1,62 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { History } from '../../src/components/History';
-import { useStore } from '../../src/store/store';
+import { History } from '@/components/History';
+import { useStore } from '@/store/store';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock the useStore hook
-vi.mock('../../src/store/store', () => ({
+vi.mock('@/store/store', () => ({
   useStore: vi.fn()
 }));
 
 // Mock the Button component
-vi.mock('../../src/components/ui/Button', () => ({
-  Button: ({ children, onClick }: { children: React.ReactNode; onClick: () => void }) => (
-    <button onClick={onClick}>{children}</button>
+vi.mock('@/components/ui/Button', () => ({
+  Button: ({ children, onClick, ...props }: any) => (
+    <button onClick={onClick} {...props}>{children}</button>
   )
 }));
 
 describe('History Component', () => {
   beforeEach(() => {
-    // Reset all mocks before each test
     vi.clearAllMocks();
+    (useStore as jest.Mock).mockReturnValue({
+      clearHistory: vi.fn()
+    });
   });
 
-  it('renders correctly with history', () => {
-    const history = ['1 + 2 = 3', '3 * 4 = 12', '12 / 2 = 6'];
+  it('renders empty state when history is empty', () => {
+    render(<History history={[]} />);
 
-    render(<History history={history} />);
+    // Check if empty state message is rendered
+    expect(screen.getByText(/Henüz hesaplama yapılmadı/i)).toBeInTheDocument();
+  });
 
-    // Check if history items are rendered
-    history.forEach(item => {
+  it('renders history items when history is not empty', () => {
+    const testHistory = [
+      '2 + 2 = 4',
+      '3 * 5 = 15',
+      '10 / 2 = 5'
+    ];
+
+    render(<History history={testHistory} />);
+
+    // Check if all history items are rendered
+    testHistory.forEach(item => {
       expect(screen.getByText(item)).toBeInTheDocument();
     });
   });
 
-  it('shows empty state when there is no history', () => {
-    render(<History history={[]} />);
-
-    // Check if empty state is shown
-    expect(screen.getByText('Henüz hesaplama yapılmadı')).toBeInTheDocument();
-  });
-
   it('calls clearHistory when clear button is clicked', () => {
-    const clearHistory = vi.fn();
-    (useStore as jest.Mock).mockReturnValue(clearHistory);
+    const clearHistoryMock = vi.fn();
+    (useStore as jest.Mock).mockReturnValue({
+      clearHistory: clearHistoryMock
+    });
 
-    render(<History history={['1 + 2 = 3']} />);
+    render(<History history={['2 + 2 = 4']} />);
 
-    // Click the clear button
     fireEvent.click(screen.getByText('Geçmişi Temizle'));
-    expect(clearHistory).toHaveBeenCalled();
+
+    // Check if clearHistory function was called
+    expect(clearHistoryMock).toHaveBeenCalled();
   });
 });

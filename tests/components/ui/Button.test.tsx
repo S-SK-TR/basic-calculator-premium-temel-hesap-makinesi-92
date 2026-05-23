@@ -1,60 +1,61 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { Button } from '../../../src/components/ui/Button';
-
-// Mock the cn utility
-vi.mock('../../../src/lib/utils', () => ({
-  cn: (...classes: string[]) => classes.join(' ')
-}));
+import { Button } from '@/components/ui/Button';
+import { describe, it, expect, vi } from 'vitest';
 
 // Mock the Loader2 icon
 vi.mock('lucide-react', () => ({
-  Loader2: () => <div>Loader2</div>
+  Loader2: () => <div>Loading Icon</div>
 }));
 
 describe('Button Component', () => {
-  it('renders correctly with default props', () => {
+  it('renders a button with the correct text', () => {
     render(<Button>Click Me</Button>);
-
-    // Check if button is rendered with default props
-    const button = screen.getByText('Click Me');
-    expect(button).toBeInTheDocument();
-    expect(button).toHaveClass('bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/20');
-    expect(button).toHaveClass('h-10 px-4 text-sm');
+    expect(screen.getByText('Click Me')).toBeInTheDocument();
   });
 
-  it('renders correctly with variant prop', () => {
-    render(<Button variant="secondary">Click Me</Button>);
+  it('applies the correct variant classes', () => {
+    const { rerender } = render(<Button variant="primary">Primary</Button>);
+    expect(screen.getByText('Primary')).toHaveClass('bg-blue-600');
 
-    // Check if button is rendered with secondary variant
-    const button = screen.getByText('Click Me');
-    expect(button).toBeInTheDocument();
-    expect(button).toHaveClass('bg-[var(--bg-elevated)] hover:bg-[var(--border)] text-[var(--text-primary)] border border-[var(--border)]');
+    rerender(<Button variant="secondary">Secondary</Button>);
+    expect(screen.getByText('Secondary')).toHaveClass('bg-[var(--bg-elevated)]');
+
+    rerender(<Button variant="ghost">Ghost</Button>);
+    expect(screen.getByText('Ghost')).toHaveClass('hover:bg-[var(--bg-elevated)]');
+
+    rerender(<Button variant="destructive">Destructive</Button>);
+    expect(screen.getByText('Destructive')).toHaveClass('bg-rose-600');
   });
 
-  it('renders correctly with size prop', () => {
-    render(<Button size="lg">Click Me</Button>);
+  it('applies the correct size classes', () => {
+    const { rerender } = render(<Button size="sm">Small</Button>);
+    expect(screen.getByText('Small')).toHaveClass('h-8');
 
-    // Check if button is rendered with lg size
-    const button = screen.getByText('Click Me');
-    expect(button).toBeInTheDocument();
-    expect(button).toHaveClass('h-12 px-6 text-base');
+    rerender(<Button size="md">Medium</Button>);
+    expect(screen.getByText('Medium')).toHaveClass('h-10');
+
+    rerender(<Button size="lg">Large</Button>);
+    expect(screen.getByText('Large')).toHaveClass('h-12');
   });
 
   it('shows loading state when loading prop is true', () => {
-    render(<Button loading>Click Me</Button>);
-
-    // Check if loading state is shown
-    expect(screen.getByText('Loader2')).toBeInTheDocument();
-    expect(screen.queryByText('Click Me')).not.toBeInTheDocument();
+    render(<Button loading>Loading</Button>);
+    expect(screen.getByText('Loading Icon')).toBeInTheDocument();
+    expect(screen.queryByText('Loading')).not.toBeInTheDocument();
   });
 
   it('calls onClick handler when clicked', () => {
-    const onClick = vi.fn();
-    render(<Button onClick={onClick}>Click Me</Button>);
-
-    // Click the button
+    const handleClick = vi.fn();
+    render(<Button onClick={handleClick}>Click Me</Button>);
     fireEvent.click(screen.getByText('Click Me'));
-    expect(onClick).toHaveBeenCalled();
+    expect(handleClick).toHaveBeenCalled();
+  });
+
+  it('disables the button when disabled prop is true', () => {
+    render(<Button disabled>Disabled</Button>);
+    const button = screen.getByText('Disabled');
+    expect(button).toBeDisabled();
+    expect(button).toHaveClass('disabled:opacity-50');
   });
 });

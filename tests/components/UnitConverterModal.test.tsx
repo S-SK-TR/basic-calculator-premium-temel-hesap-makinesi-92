@@ -1,129 +1,64 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { UnitConverterModal } from '../../src/components/UnitConverterModal';
-import { useStore } from '../../src/store/store';
-
-// Mock the useStore hook
-vi.mock('../../src/store/store', () => ({
-  useStore: vi.fn()
-}));
+import { UnitConverterModal } from '@/components/UnitConverterModal';
+import { describe, it, expect, vi } from 'vitest';
 
 // Mock the Card component
-vi.mock('../../src/components/ui/Card', () => ({
-  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
+vi.mock('@/components/ui/Card', () => ({
+  Card: ({ children, ...props }: any) => (
+    <div {...props}>{children}</div>
+  )
 }));
 
 // Mock the Button component
-vi.mock('../../src/components/ui/Button', () => ({
-  Button: ({ children, onClick }: { children: React.ReactNode; onClick: () => void }) => (
-    <button onClick={onClick}>{children}</button>
+vi.mock('@/components/ui/Button', () => ({
+  Button: ({ children, onClick, ...props }: any) => (
+    <button onClick={onClick} {...props}>{children}</button>
   )
-}));
-
-// Mock the Select component
-vi.mock('../../src/components/ui/Select', () => ({
-  Select: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
-}));
-
-// Mock the Input component
-vi.mock('../../src/components/ui/Input', () => ({
-  Input: ({ value, onChange }: { value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
-    <input value={value} onChange={onChange} />
-  )
-}));
-
-// Mock the Label component
-vi.mock('../../src/components/ui/Label', () => ({
-  Label: ({ children }: { children: React.ReactNode }) => <label>{children}</label>
-}));
-
-// Mock the icons
-vi.mock('lucide-react', () => ({
-  ArrowRightLeft: () => <div>ArrowRightLeft</div>
 }));
 
 describe('UnitConverterModal Component', () => {
-  beforeEach(() => {
-    // Reset all mocks before each test
-    vi.clearAllMocks();
+  it('renders nothing when isOpen is false', () => {
+    const { container } = render(<UnitConverterModal isOpen={false} onClose={() => {}} />);
+    expect(container.firstChild).toBeNull();
   });
 
-  it('renders correctly when open', () => {
-    // Mock the store state
-    (useStore as jest.Mock).mockReturnValue({
-      calculator: {
-        currentValue: '0'
-      },
-      setCalculator: vi.fn()
-    });
-
+  it('renders the modal when isOpen is true', () => {
     render(<UnitConverterModal isOpen={true} onClose={() => {}} />);
 
-    // Check if modal is rendered
+    // Check if modal title is rendered
     expect(screen.getByText('Birim Dönüştürücü')).toBeInTheDocument();
-    expect(screen.getByText('Hesap makinesi değerini dönüştür')).toBeInTheDocument();
-  });
 
-  it('does not render when closed', () => {
-    // Mock the store state
-    (useStore as jest.Mock).mockReturnValue({
-      calculator: {
-        currentValue: '0'
-      },
-      setCalculator: vi.fn()
+    // Check if all unit types are rendered
+    ['Uzunluk', 'Ağırlık', 'Hacim', 'Sıcaklık'].forEach(type => {
+      expect(screen.getByText(type)).toBeInTheDocument();
     });
-
-    render(<UnitConverterModal isOpen={false} onClose={() => {}} />);
-
-    // Check if modal is not rendered
-    expect(screen.queryByText('Birim Dönüştürücü')).not.toBeInTheDocument();
   });
 
   it('calls onClose when close button is clicked', () => {
-    const onClose = vi.fn();
-    // Mock the store state
-    (useStore as jest.Mock).mockReturnValue({
-      calculator: {
-        currentValue: '0'
-      },
-      setCalculator: vi.fn()
-    });
+    const onCloseMock = vi.fn();
+    render(<UnitConverterModal isOpen={true} onClose={onCloseMock} />);
 
-    render(<UnitConverterModal isOpen={true} onClose={onClose} />);
-
-    // Click the close button
     fireEvent.click(screen.getByText('Kapat'));
-    expect(onClose).toHaveBeenCalled();
+
+    // Check if onClose function was called
+    expect(onCloseMock).toHaveBeenCalled();
   });
 
-  it('converts units correctly', () => {
-    const setCalculator = vi.fn();
-    // Mock the store state
-    (useStore as jest.Mock).mockReturnValue({
-      calculator: {
-        currentValue: '100'
-      },
-      setCalculator
-    });
-
+  it('converts units when convert button is clicked', () => {
     render(<UnitConverterModal isOpen={true} onClose={() => {}} />);
 
-    // Simulate changing the input value
-    const input = screen.getByDisplayValue('100');
-    fireEvent.change(input, { target: { value: '50' } });
+    // Select length conversion
+    fireEvent.click(screen.getByText('Uzunluk'));
 
-    // Simulate changing the from unit
-    const fromUnitSelect = screen.getByLabelText('Dönüştürülecek birim');
-    fireEvent.change(fromUnitSelect, { target: { value: 'cm' } });
+    // Enter values
+    fireEvent.change(screen.getByPlaceholderText('Değer'), { target: { value: '10' } });
+    fireEvent.change(screen.getByPlaceholderText('Sonuç'), { target: { value: '100' } });
 
-    // Simulate changing the to unit
-    const toUnitSelect = screen.getByLabelText('Hedef birim');
-    fireEvent.change(toUnitSelect, { target: { value: 'm' } });
-
-    // Click the convert button
+    // Click convert button
     fireEvent.click(screen.getByText('Dönüştür'));
 
-    // Check if setCalculator is called with the correct value
-    expect(setCalculator).toHaveBeenCalledWith({ currentValue: '0.5' });
+    // Check if conversion result is displayed
+    expect(screen.getByText(/10 santimetre/i)).toBeInTheDocument();
   });
 });

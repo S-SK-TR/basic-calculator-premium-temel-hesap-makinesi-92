@@ -9,40 +9,58 @@ vi.mock('@/hooks/useTheme', () => ({
   useTheme: vi.fn()
 }));
 
-describe('ThemeToggle Component', () => {
-  const mockToggleTheme = vi.fn();
+// Mock the icons
+vi.mock('lucide-react', () => ({
+  Sun: () => <div>Sun Icon</div>,
+  Moon: () => <div>Moon Icon</div>
+}));
 
+describe('ThemeToggle Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useTheme as any).mockReturnValue({
+    (useTheme as jest.Mock).mockReturnValue({
       theme: 'light',
-      toggleTheme: mockToggleTheme
+      toggleTheme: vi.fn()
     });
   });
 
-  it('renders without crashing', () => {
+  it('renders the theme toggle button', () => {
     render(<ThemeToggle />);
+
+    // Check if button is rendered
     expect(screen.getByRole('button')).toBeInTheDocument();
   });
 
-  it('displays sun icon when theme is light', () => {
+  it('shows sun icon when theme is light', () => {
     render(<ThemeToggle />);
-    expect(screen.getByTestId('sun-icon')).toBeInTheDocument();
+
+    // Check if sun icon is rendered
+    expect(screen.getByText('Sun Icon')).toBeInTheDocument();
   });
 
-  it('displays moon icon when theme is dark', () => {
-    (useTheme as any).mockReturnValue({
+  it('shows moon icon when theme is dark', () => {
+    (useTheme as jest.Mock).mockReturnValue({
       theme: 'dark',
-      toggleTheme: mockToggleTheme
+      toggleTheme: vi.fn()
     });
 
     render(<ThemeToggle />);
-    expect(screen.getByTestId('moon-icon')).toBeInTheDocument();
+
+    // Check if moon icon is rendered
+    expect(screen.getByText('Moon Icon')).toBeInTheDocument();
   });
 
-  it('calls toggleTheme when clicked', () => {
+  it('calls toggleTheme when button is clicked', () => {
+    const toggleThemeMock = vi.fn();
+    (useTheme as jest.Mock).mockReturnValue({
+      theme: 'light',
+      toggleTheme: toggleThemeMock
+    });
+
     render(<ThemeToggle />);
     fireEvent.click(screen.getByRole('button'));
-    expect(mockToggleTheme).toHaveBeenCalled();
+
+    // Check if toggleTheme function was called
+    expect(toggleThemeMock).toHaveBeenCalled();
   });
 });

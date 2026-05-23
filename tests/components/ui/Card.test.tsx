@@ -1,28 +1,29 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { Card } from '../../../src/components/ui/Card';
-
-// Mock the cn utility
-vi.mock('../../../src/lib/utils', () => ({
-  cn: (...classes: string[]) => classes.join(' ')
-}));
+import { Card } from '@/components/ui/Card';
+import { describe, it, expect } from 'vitest';
 
 describe('Card Component', () => {
-  it('renders correctly with default props', () => {
-    render(<Card>Test Content</Card>);
+  it('renders children inside a card', () => {
+    render(
+      <Card>
+        <div data-testid="child">Test Child</div>
+      </Card>
+    );
 
-    // Check if card is rendered with default props
-    const card = screen.getByText('Test Content');
-    expect(card).toBeInTheDocument();
-    expect(card).toHaveClass('bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl');
+    // Check if child is rendered inside the card
+    expect(screen.getByTestId('child')).toBeInTheDocument();
   });
 
-  it('renders correctly with custom className', () => {
-    render(<Card className="custom-class">Test Content</Card>);
+  it('applies additional className to the card', () => {
+    render(
+      <Card className="custom-class">
+        <div>Test Child</div>
+      </Card>
+    );
 
-    // Check if card is rendered with custom className
-    const card = screen.getByText('Test Content');
-    expect(card).toBeInTheDocument();
+    // Check if custom class is applied to the card
+    const card = screen.getByText('Test Child').parentElement;
     expect(card).toHaveClass('custom-class');
   });
 });

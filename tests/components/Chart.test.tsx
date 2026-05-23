@@ -1,80 +1,77 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { Chart } from '../../src/components/Chart';
-import { useStore } from '../../src/store/store';
+import { render, screen } from '@testing-library/react';
+import { Chart } from '@/components/Chart';
+import { useStore } from '@/store/store';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock the useStore hook
-vi.mock('../../src/store/store', () => ({
+vi.mock('@/store/store', () => ({
   useStore: vi.fn()
 }));
 
 // Mock the Card component
-vi.mock('../../src/components/ui/Card', () => ({
-  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
+vi.mock('@/components/ui/Card', () => ({
+  Card: ({ children, ...props }: any) => (
+    <div {...props}>{children}</div>
+  )
 }));
 
 describe('Chart Component', () => {
+  const mockStore = {
+    calculator: {
+      history: []
+    }
+  };
+
   beforeEach(() => {
-    // Reset all mocks before each test
     vi.clearAllMocks();
+    (useStore as jest.Mock).mockReturnValue(mockStore);
   });
 
-  it('renders correctly when open', () => {
-    // Mock the store state with some history
+  it('renders nothing when isOpen is false', () => {
+    const { container } = render(<Chart isOpen={false} onClose={() => {}} />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('renders the chart when isOpen is true and there is history', () => {
+    const testHistory = [
+      '2 + 2 = 4',
+      '3 * 5 = 15',
+      '10 / 2 = 5'
+    ];
+
     (useStore as jest.Mock).mockReturnValue({
       calculator: {
-        history: ['1 + 2 = 3', '3 * 4 = 12', '12 / 2 = 6']
+        history: testHistory
       }
     });
 
     render(<Chart isOpen={true} onClose={() => {}} />);
 
-    // Check if chart is rendered
+    // Check if chart title is rendered
     expect(screen.getByText('Fonksiyon Grafiği')).toBeInTheDocument();
-    expect(screen.getByText('Son 10 işlemin grafiği gösteriliyor.')).toBeInTheDocument();
-  });
 
-  it('does not render when closed', () => {
-    // Mock the store state with some history
-    (useStore as jest.Mock).mockReturnValue({
-      calculator: {
-        history: ['1 + 2 = 3', '3 * 4 = 12', '12 / 2 = 6']
-      }
-    });
+    // Check if chart description is rendered
+    expect(screen.getByText(/Son 10 işlemin grafiği gösteriliyor/i)).toBeInTheDocument();
 
-    render(<Chart isOpen={false} onClose={() => {}} />);
-
-    // Check if chart is not rendered
-    expect(screen.queryByText('Fonksiyon Grafiği')).not.toBeInTheDocument();
+    // Check if SVG element is rendered
+    expect(screen.getByRole('img')).toBeInTheDocument();
   });
 
   it('shows empty state when there is no history', () => {
-    // Mock the store state with empty history
-    (useStore as jest.Mock).mockReturnValue({
-      calculator: {
-        history: []
-      }
-    });
-
     render(<Chart isOpen={true} onClose={() => {}} />);
 
-    // Check if empty state is shown
-    expect(screen.getByText('Grafik çizmek için yeterli veri yok')).toBeInTheDocument();
+    // Check if empty state message is rendered
+    expect(screen.getByText(/Grafik çizmek için yeterli veri yok/i)).toBeInTheDocument();
   });
 
   it('calls onClose when close button is clicked', () => {
-    const onClose = vi.fn();
-    // Mock the store state with some history
-    (useStore as jest.Mock).mockReturnValue({
-      calculator: {
-        history: ['1 + 2 = 3', '3 * 4 = 12', '12 / 2 = 6']
-      }
-    });
+    const onCloseMock = vi.fn();
+    render(<Chart isOpen={true} onClose={onCloseMock} />);
 
-    render(<Chart isOpen={true} onClose={onClose} />);
-
-    // Click the close button
     fireEvent.click(screen.getByText('Kapat'));
-    expect(onClose).toHaveBeenCalled();
+
+    // Check if onClose function was called
+    expect(onCloseMock).toHaveBeenCalled();
   });
 });
